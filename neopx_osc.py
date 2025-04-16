@@ -17,19 +17,13 @@ import asyncio
 import socket
 
 class MyStrip():
-    def __init__(self):
+    def __init__(self, board_pin=board.D18, num_pixels=30):
         self.h = 0
         self.s = 1
         self.v = 1
-        self.pixels = neopixel.NeoPixel(board.D18,30)
-
+        self.pixels = neopixel.NeoPixel(board_pin, num_pixels)
 
     def set_hsv(self, address: str, val: float, *args):
-        #if len(args):
-        #    print('got wrong number arguments')
-        #    print('val: {}'.format(val))
-        #    print('args: {}'.format(args))
-
         if address == '/hue':
             self.h = val
         if address == '/sat':
@@ -55,7 +49,6 @@ async def init_loop(ip, port):
     server = osc_server.AsyncIOOSCUDPServer(
         (ip, port), dispatcher, asyncio.get_event_loop())
 
-
     transport, protocol = await server.create_serve_endpoint()
     
     await main_loop()
@@ -73,8 +66,6 @@ def get_default_IP():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    
-
 
     parser.add_argument("--ip",
                         default=get_default_IP(), help="The ip to listen on")
