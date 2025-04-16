@@ -14,6 +14,7 @@ import neopixel
 import colorsys
 
 import asyncio
+import socket
 
 class MyStrip():
     def __init__(self):
@@ -62,13 +63,23 @@ async def init_loop(ip, port):
     transport.close()
 
 
+def get_default_IP():
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Connect to an external address to determine the local IP
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    
+
+
     parser.add_argument("--ip",
-                        default="192.168.0.6", help="The ip to listen on")
+                        default=get_default_IP(), help="The ip to listen on")
     parser.add_argument("--port",
-                        type=int, default=5005, help="The port to listen on")
+                        type=int, default=5000, help="The port to listen on")
     args = parser.parse_args()
 
     dispatcher = dispatcher.Dispatcher()
@@ -77,5 +88,7 @@ if __name__ == "__main__":
     dispatcher.map("/hue", my_strip.set_hsv)
     dispatcher.map("/sat", my_strip.set_hsv)
     dispatcher.map("/val", my_strip.set_hsv)
+
+    print("Listening on {} port {}".format(args.ip, args.port))
 
     asyncio.run(init_loop(args.ip, args.port))
