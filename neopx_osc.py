@@ -11,12 +11,12 @@ from pythonosc import osc_server
 import asyncio
 import socket
 
-from strip import MyStrip
+from strip import StripOSCBridge
 
 
 async def main_loop():
     while(True):
-        my_strip.set_pixels()
+        my_strip.preset.set_pixels()
         await asyncio.sleep(0.02)
 
 async def init_loop(ip, port):
@@ -50,10 +50,7 @@ if __name__ == "__main__":
 
     dispatcher = dispatcher.Dispatcher()
 
-    my_strip = MyStrip()
-    dispatcher.map("/hue", my_strip.set_hsv)
-    dispatcher.map("/sat", my_strip.set_hsv)
-    dispatcher.map("/val", my_strip.set_hsv)
+    my_strip = StripOSCBridge(dispatcher=dispatcher)
 
     print("Listening on {} port {}".format(args.ip, args.port))
 
