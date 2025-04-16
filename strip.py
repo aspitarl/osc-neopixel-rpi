@@ -1,6 +1,7 @@
 import board
 import neopixel
 import colorsys
+import time
 
 class StripOSCBridge:
     def __init__(self, 
@@ -60,3 +61,49 @@ class Preset_Monochrome:
 preset_lookup = {
 'monochrome': Preset_Monochrome,
 } 
+
+class Preset_Rainbow:
+    def __init__(self, parent_strip):
+        self.parent_strip = parent_strip
+        self.map_dispatcher()
+
+        self.wavelength = 0.25  # Default wavelength in fraction of the strip length
+        self.wavelength_max = self.parent_strip.pixels.n*5
+        self.offset = 0  # Offset for animation
+
+        self.time_updated = time.time()
+
+        self.wave_speed = 0.01  # Speed of the wave animation
+        self.wave_speed_max = 0.1
+
+
+    def map_dispatcher(self):
+        self.parent_strip.dispatcher.map('/wavelength', self.receive_message)
+        self.parent_strip.dispatcher.map('/wave_speed', self.receive_message)
+
+    def receive_message(self, address: str, val: float, *args):
+        if address == '/wavelength':
+            self.wavelength = val*self.wavelength_max
+        if address == '/wave_speed':
+            self.wave_speed = val*self.wave_speed_max
+            print(val)
+
+    def set_pixels(self):
+        pixels = self.parent_strip.pixels
+        num_pixels = len(pixels)
+
+        for i in range(num_pixels):
+            hue = ((i + self.offset) % self.wavelength) / self.wavelength
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
+            pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
+
+        pixels.show()
+
+        # Update the offset for the next frame
+        current_time = time.time()
+        if current_time - self.time_updated > self.wave_speed:
+            self.time_updated = current_time
+            self.offset += 1
+        # self.offset = (self.offset + 1) % self.wavelength
+
+preset_lookup['rainbow'] = Preset_Rainbow
