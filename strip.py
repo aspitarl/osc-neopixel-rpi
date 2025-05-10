@@ -11,7 +11,7 @@ class StripOSCBridge:
                  dispatcher: dispatcher.Dispatcher,
                  preset='monochrome', 
                  board_pin=board.D18, 
-                 num_pixels=30
+                 num_pixels=410
                  ):
         self.pixels = neopixel.NeoPixel(board_pin, num_pixels, auto_write=False)
 

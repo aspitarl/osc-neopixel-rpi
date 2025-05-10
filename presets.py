@@ -2,7 +2,7 @@ import time
 import colorsys
 import random
 
-led_brightness = 0.2  # Default brightness for all presets
+led_brightness = 0.5  # Default brightness for all presets
 
 ## Presets
 class Preset_Monochrome:
@@ -66,19 +66,25 @@ class Preset_Rainbow:
 
         self.time_updated = time.time()
 
-        self.wave_speed = 0.01  # Speed of the wave animation
-        self.wave_speed_max = 0.1
+        self.wait_time = 0.01  # Speed of the wave animation
+        self.wait_time_max = 0.1
+
+        self.wave_speed_max = 50 # hue offset increment per frame
+        self.wave_speed = 0.1  # Speed of the wave animation
 
 
     def map_dispatcher(self):
         self.parent_strip.dispatcher.map('/wavelength', self.receive_message)
+        self.parent_strip.dispatcher.map('/wait_time', self.receive_message)
         self.parent_strip.dispatcher.map('/wave_speed', self.receive_message)
 
     def receive_message(self, address: str, val: float, *args):
         if address == '/wavelength':
             self.wavelength = val*self.wavelength_max
+        if address == '/wait_time':
+            self.wait_time = val*self.wait_time_max
         if address == '/wave_speed':
-            self.wave_speed = val*self.wave_speed_max
+            self.wave_speed = val * self.wave_speed_max
 
     def set_pixels(self):
         pixels = self.parent_strip.pixels
@@ -98,9 +104,9 @@ class Preset_Rainbow:
 
         # Update the offset for the next frame
         current_time = time.time()
-        if current_time - self.time_updated > self.wave_speed:
+        if current_time - self.time_updated > self.wait_time:
             self.time_updated = current_time
-            self.offset += 1
+            self.offset += self.wave_speed
         # self.offset = (self.offset + 1) % self.wavelength
 
 preset_lookup['rainbow'] = Preset_Rainbow
@@ -149,13 +155,13 @@ class Preset_Letters:
         self.parent_strip = parent_strip
         self.map_dispatcher()
 
-        self.hue_shift = 2/14  # Default hue shift per letter
+        self.hue_shift = 0.5/14  # Default hue shift per letter
         self.hue_shift_max = 1.0
 
         self.idx_offset = 0  # Offset for animation
         self.time_updated = time.time()  # Track the last update time
 
-        self.time_wait = 0.2  # Time to wait before updating the offset
+        self.time_wait = 0.1  # Time to wait before updating the offset
 
     def map_dispatcher(self):
         self.parent_strip.dispatcher.map('/hue_shift', self.receive_message)
@@ -225,7 +231,7 @@ class Preset_RainbowRain(Preset_Rainbow):
 
         # Update the offset for the rainbow animation
         current_time = time.time()
-        if current_time - self.time_updated > self.wave_speed:
+        if current_time - self.time_updated > self.wait_time:
             self.time_updated = current_time
             self.offset += 1
 
@@ -249,17 +255,31 @@ class Preset_Rainbombs:
         self.parent_strip = parent_strip
         self.map_dispatcher()
 
-        self.bomb_interval = 0.1  # Time between bombs
-        self.bomb_speed = 0.05  # Speed of the expanding pixels
-        self.bomb_lifetime = 50  # Number of frames for each bomb
+        self.bomb_interval = 1  # Time between bombs
+        self.bomb_speed = 0.25  # Speed of the expanding pixels
+        self.bomb_lifetime = 5  # Number of frames for each bomb
+        self.bomb_size = 5  # Exact number of pixels in the bomb
         self.last_bomb_time = time.time()
 
-        self.active_bombs = []  # List of active bombs [(position, frame_count)]
+        self.active_bombs = []  # List of active bombs [(position, frame_count, direction)]
+        self.hue = 0  # Current hue for the bombs
+        self.hue_speed = 0.0005  # Speed of hue shifting
+        self.background_hue = 0.5  # Initial background hue
+        self.background_hue_speed = 0.02  # Speed of background hue shifting
+        self.bg_led_brightness = 0.025  # Brightness of the background LEDs
+
+        self.letter_phase_delay = {letter: random.uniform(0.1, 1.0) for letter in letter_lookup_dict}  # Random phase delay for each letter
+        self.letter_last_bomb_time = {letter: time.time() for letter in letter_lookup_dict}  # Track last bomb time for each letter
+
+        self.bomb_brightness = 1.0  # Default bomb brightness (scaled to led_brightness)
 
     def map_dispatcher(self):
         self.parent_strip.dispatcher.map('/bomb_interval', self.receive_message)
         self.parent_strip.dispatcher.map('/bomb_speed', self.receive_message)
         self.parent_strip.dispatcher.map('/bomb_lifetime', self.receive_message)
+        self.parent_strip.dispatcher.map('/hue_speed', self.receive_message)
+        self.parent_strip.dispatcher.map('/bomb_size', self.receive_message)
+        self.parent_strip.dispatcher.map('/bomb_brightness', self.receive_message)
 
     def receive_message(self, address: str, val: float, *args):
         if address == '/bomb_interval':
@@ -268,37 +288,49 @@ class Preset_Rainbombs:
             self.bomb_speed = val
         elif address == '/bomb_lifetime':
             self.bomb_lifetime = int(val)
+        elif address == '/hue_speed':
+            self.hue_speed = val
+        elif address == '/bomb_size':
+            self.bomb_size = max(1, int(val))  # Ensure bomb size is at least 1
+        elif address == '/bomb_brightness':
+            self.bomb_brightness = max(0.0, min(1.0, val))  # Clamp brightness between 0 and 1
 
     def set_pixels(self):
         pixels = self.parent_strip.pixels
         num_pixels = len(pixels)
 
-        # Check if it's time to spawn a new bomb
-        current_time = time.time()
-        if current_time - self.last_bomb_time >= self.bomb_interval:
-            self.last_bomb_time = current_time
-            bomb_position = random.randint(0, num_pixels - 1)
-            self.active_bombs.append((bomb_position, 0))  # Add new bomb with frame count 0
+        # Update the hue
+        self.hue = (self.hue + self.hue_speed) % 1.0
 
-        # Clear the strip
+        # Update the background hue
+        self.background_hue = (self.background_hue + self.background_hue_speed) % 1.0
+
+        # Set the background hue
+        bg_r, bg_g, bg_b = colorsys.hsv_to_rgb(self.background_hue, 1, self.bg_led_brightness)
         for i in range(num_pixels):
-            pixels[i] = (0, 0, 0)
+            pixels[i] = (int(bg_r * 255), int(bg_g * 255), int(bg_b * 255))
+
+        # Check if it's time to spawn a new bomb for each letter
+        current_time = time.time()
+        for letter, (start, end) in letter_lookup_dict.items():
+            if current_time - self.letter_last_bomb_time[letter] >= self.letter_phase_delay[letter]:
+                self.letter_last_bomb_time[letter] = current_time
+                bomb_position = random.randint(start, end - 1)
+                direction = random.choice([-1, 1])  # Random direction: -1 for left, 1 for right
+                self.active_bombs.append((bomb_position, 0, direction))  # Add new bomb with direction
 
         # Update and draw active bombs
         new_active_bombs = []
-        for bomb_position, frame_count in self.active_bombs:
+        r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness * led_brightness)  # Scale bomb brightness
+        for bomb_position, frame_count, direction in self.active_bombs:
             if frame_count < self.bomb_lifetime:
                 # Calculate the positions of the expanding pixels
-                left_pixel = (bomb_position - frame_count) % num_pixels
-                right_pixel = (bomb_position + frame_count) % num_pixels
-
-                # Set the colors of the expanding pixels
-                r, g, b = colorsys.hsv_to_rgb(frame_count / self.bomb_lifetime, 1, led_brightness)
-                pixels[left_pixel] = (int(r * 255), int(g * 255), int(b * 255))
-                pixels[right_pixel] = (int(r * 255), int(g * 255), int(b * 255))
+                for offset in range(self.bomb_size):
+                    pixel_position = (bomb_position + direction * (offset + frame_count)) % num_pixels
+                    pixels[pixel_position] = (int(r * 255), int(g * 255), int(b * 255))
 
                 # Increment the frame count and keep the bomb active
-                new_active_bombs.append((bomb_position, frame_count + 1))
+                new_active_bombs.append((bomb_position, frame_count + 1, direction))
 
         # Update the list of active bombs
         self.active_bombs = new_active_bombs
@@ -309,5 +341,4 @@ class Preset_Rainbombs:
 
 
 preset_lookup['rainbombs'] = Preset_Rainbombs
-
 

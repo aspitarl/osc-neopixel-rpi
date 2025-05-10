@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # parser.add_argument("--board_pin",
     #                     type=int, default=18, help="The GPIO pin to use")
     parser.add_argument("--num_pixels", '-n',
-                        type=int, default=120, help="The number of pixels")
+                        type=int, default=410, help="The number of pixels")
     args = parser.parse_args()
 
     dispatcher = dispatcher.Dispatcher()
