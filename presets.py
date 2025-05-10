@@ -1,38 +1,47 @@
 import time
 import colorsys
-
 ## Presets
 class Preset_Monochrome:
     def __init__(self, parent_strip):
         self.h = 0
         self.s = 1
-        self.v = 1
-        
+        self.v = 0.1
+        self.hue_offset = 0
+        self.cycle_speed = 0.01  # Speed of hue cycling
         self.parent_strip = parent_strip
 
+        self.time_updated = time.time()  # Track the last update time
 
         self.map_dispatcher()
     
     def map_dispatcher(self):
-        self.parent_strip.dispatcher.map('/hue', self.recieve_message)
+        self.parent_strip.dispatcher.map('/hue_offset', self.recieve_message)
         self.parent_strip.dispatcher.map('/sat', self.recieve_message)
         self.parent_strip.dispatcher.map('/val', self.recieve_message)
+        self.parent_strip.dispatcher.map('/cycle_speed', self.recieve_message)
 
     def recieve_message(self, address: str, val: float, *args):
-        if address == '/hue':
-            self.h = val
+        if address == '/hue_offset':
+            self.hue_offset = val
         if address == '/sat':
             self.s = val
         if address == '/val':
             self.v = val
+        if address == '/cycle_speed':
+            self.cycle_speed = val
 
     def set_pixels(self):
-        r,g,b =  colorsys.hsv_to_rgb(self.h, self.s, self.v)
+        # Update hue based on time and cycle speed
+        current_time = time.time()
+        self.h = (self.h + self.cycle_speed * (current_time - self.time_updated)) % 1.0
+        self.time_updated = current_time
+
+        r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v)
 
         pixels = self.parent_strip.pixels
         
         for i in range(len(pixels)):
-            pixels[i] = (r*255,g*255,b*255)
+            pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
         pixels.write()
         pixels.show()
