@@ -46,8 +46,9 @@ class Preset_Rainbow:
         self.parent_strip = parent_strip
         self.map_dispatcher()
 
-        self.wavelength = 0.25  # Default wavelength in fraction of the strip length
         self.wavelength_max = self.parent_strip.pixels.n*5
+        self.wavelength = 0.25  # Default wavelength in fraction of the strip length
+        self.wavelength = self.wavelength_max * self.wavelength  # Convert to pixel count
         self.offset = 0  # Offset for animation
 
         self.time_updated = time.time()
@@ -71,8 +72,12 @@ class Preset_Rainbow:
         num_pixels = len(pixels)
 
         for i in range(num_pixels):
-            hue = ((i + self.offset) % self.wavelength) / self.wavelength
+            if i not in pixel_map_arr:
+                continue
+            i_hue = pixel_map_arr.index(i)
+            hue = ((i_hue + self.offset) % self.wavelength) / self.wavelength
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 0.25)
+
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
         pixels.write()
@@ -102,11 +107,26 @@ letter_lookup_dict = {
     's1': (205,225),
     't2': (234,255),
     'a2': (256,285),
-    't3': (286,315),
+    't3': (286,313),
     'i2': (315,337),
     'o2': (350,369),
     'n2': (378,410),
 }
+
+# make a lookup array for incremental pixel positions
+
+pixel_map_arr = []
+total_length = sum([end - start for start, end in letter_lookup_dict.values()])
+for letter, (start, end) in letter_lookup_dict.items():
+    pixel_map_arr.extend(range(start, end))
+
+
+def get_mapped_pixel(i, pixel_map_arr):
+    if i >= len(pixel_map_arr):
+        return i 
+    return pixel_map_arr[i]
+
+
 
 # Make a preset that sets each letter to a different color
 # one parameter should be the hue shift per letter
