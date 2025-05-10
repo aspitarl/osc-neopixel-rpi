@@ -1,7 +1,10 @@
 import board
 import neopixel
 
-pixels = neopixel.NeoPixel(board.D18,30)
-pixels[0] = (10, 0 ,0)
-pixels[9] = (0, 10 ,0)
+pixels = neopixel.NeoPixel(board.D18,120, auto_write=False)
+
+for i in range(len(pixels)):
+    pixels[i] = (255,255,0)
+
+pixels.write()
 pixels.show()
