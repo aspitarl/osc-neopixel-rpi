@@ -12,7 +12,7 @@ class StripOSCBridge:
                  board_pin=board.D18, 
                  num_pixels=30
                  ):
-        self.pixels = neopixel.NeoPixel(board_pin, num_pixels)
+        self.pixels = neopixel.NeoPixel(board_pin, num_pixels, auto_write=False)
 
         self.dispatcher = dispatcher
 
@@ -59,6 +59,8 @@ class Preset_Monochrome:
         
         for i in range(len(pixels)):
             pixels[i] = (r*255,g*255,b*255)
+
+        pixels.write()
         pixels.show()
 
 preset_lookup = {
@@ -96,9 +98,10 @@ class Preset_Rainbow:
 
         for i in range(num_pixels):
             hue = ((i + self.offset) % self.wavelength) / self.wavelength
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 0.25)
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
+        pixels.write()
         pixels.show()
 
         # Update the offset for the next frame
