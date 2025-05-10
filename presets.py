@@ -1,5 +1,8 @@
 import time
 import colorsys
+
+led_brightness = 0.2  # Default brightness for all presets
+
 ## Presets
 class Preset_Monochrome:
     def __init__(self, parent_strip):
@@ -36,7 +39,7 @@ class Preset_Monochrome:
         self.h = (self.h + self.cycle_speed * (current_time - self.time_updated)) % 1.0
         self.time_updated = current_time
 
-        r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v)
+        r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v*led_brightness)
 
         pixels = self.parent_strip.pixels
         
@@ -85,7 +88,7 @@ class Preset_Rainbow:
                 continue
             i_hue = pixel_map_arr.index(i)
             hue = ((i_hue + self.offset) % self.wavelength) / self.wavelength
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, 0.25)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, led_brightness)
 
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
@@ -173,7 +176,7 @@ class Preset_Letters:
         for letter, (start, end) in letter_lookup_dict.items():
             letter_idx = list(letter_lookup_dict.keys()).index(letter) + self.idx_offset
             hue = (letter_idx * self.hue_shift) % 1.0
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, 0.10)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, led_brightness)
             for i in range(start, end):
                 pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
