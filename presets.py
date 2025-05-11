@@ -70,7 +70,7 @@ class Preset_Rainbow:
         self.wait_time_max = 0.1
 
         self.wave_speed_max = 50 # hue offset increment per frame
-        self.wave_speed = 0.1  # Speed of the wave animation
+        self.wave_speed = 0.5  # Speed of the wave animation
 
 
     def map_dispatcher(self):
