@@ -17,7 +17,7 @@ from strip import StripOSCBridge
 async def main_loop():
     while(True):
         my_strip.preset.set_pixels()
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.03)
 
 async def init_loop(ip, port):
     def set_preset_osc(self, address: str, val: str, *args):

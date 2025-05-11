@@ -17,6 +17,8 @@ class StripOSCBridge:
 
         self.dispatcher = dispatcher
 
+        self.dispatcher.map('/preset', self.change_preset)
+
         self.set_preset(preset)
 
     #TODO: cannot change dispatcher mapping while dispatcher is running, figure out how to change the mapping 
@@ -26,4 +28,11 @@ class StripOSCBridge:
 
         else:
             print(f"Preset {preset} not found. Using default preset.")
+
+    def change_preset(self, address: str, val: float, *args):
+        preset_names = list(preset_lookup.keys())
+        index = int(val * (len(preset_names) - 1))  # Scale 0-1 to preset indices
+        selected_preset = preset_names[index]
+        print(f"Switching to preset: {selected_preset}")
+        self.set_preset(selected_preset)
 
