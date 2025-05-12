@@ -1,0 +1,16 @@
+[Unit]
+Description=Start neopx_osc.py on boot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/bin/bash /home/lee/code/osc-neopixel-rpi/startup.sh
+WorkingDirectory=/home/lee/code/osc-neopixel-rpi
+Restart=always
+RestartSec=30
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+
