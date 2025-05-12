@@ -45,7 +45,6 @@ class Preset_Monochrome:
         for i in range(len(pixels)):
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
-        pixels.write()
         pixels.show()
 
 preset_lookup = {
@@ -97,7 +96,6 @@ class Preset_Rainbow:
 
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
-        pixels.write()
         pixels.show()
 
         # Update the offset for the next frame
@@ -185,7 +183,6 @@ class Preset_Letters:
             for i in range(start, end):
                 pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
-        pixels.write()
         pixels.show()
 
 preset_lookup['letters'] = Preset_Letters
@@ -242,7 +239,6 @@ class Preset_RainbowRain(Preset_Rainbow):
             dot_position = (i + self.dot_offset) % num_pixels
             pixels[dot_position] = self.dot_color
 
-        pixels.write()
         pixels.show()
 
 
@@ -334,7 +330,6 @@ class Preset_Rainbombs:
         self.active_bombs = new_active_bombs
 
         # Write the updated pixel data
-        pixels.write()
         pixels.show()
 
 
