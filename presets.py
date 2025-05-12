@@ -2,7 +2,7 @@ import time
 import colorsys
 import random
 
-led_brightness = 0.5  # Default brightness for all presets
+led_brightness = 0.1  # Default brightness for all presets
 
 ## Presets
 class Preset_Monochrome:
