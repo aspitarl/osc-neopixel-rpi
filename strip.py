@@ -13,7 +13,7 @@ class StripOSCBridge:
                  board_pin=board.D18, 
                  num_pixels=410
                  ):
-        self.pixels = neopixel.NeoPixel(board_pin, num_pixels, auto_write=False)
+        self.pixels = neopixel.NeoPixel(board_pin, num_pixels, auto_write=False, brightness=0.1)
 
         self.dispatcher = dispatcher
 

@@ -2,8 +2,6 @@ import time
 import colorsys
 import random
 
-led_brightness = 0.1  # Default brightness for all presets
-
 ## Presets
 class Preset_Monochrome:
     def __init__(self, parent_strip):
@@ -40,7 +38,7 @@ class Preset_Monochrome:
         self.h = (self.h + self.cycle_speed * (current_time - self.time_updated)) % 1.0
         self.time_updated = current_time
 
-        r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v*led_brightness)
+        r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v)
 
         pixels = self.parent_strip.pixels
         
@@ -95,7 +93,7 @@ class Preset_Rainbow:
                 continue
             i_hue = pixel_map_arr.index(i)
             hue = ((i_hue + self.offset) % self.wavelength) / self.wavelength
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, led_brightness)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
 
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
@@ -183,7 +181,7 @@ class Preset_Letters:
         for letter, (start, end) in letter_lookup_dict.items():
             letter_idx = list(letter_lookup_dict.keys()).index(letter) + self.idx_offset
             hue = (letter_idx * self.hue_shift) % 1.0
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, led_brightness)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
             for i in range(start, end):
                 pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
@@ -226,7 +224,7 @@ class Preset_RainbowRain(Preset_Rainbow):
                 continue
             i_hue = pixel_map_arr.index(i)
             hue = ((i_hue + self.offset) % self.wavelength) / self.wavelength
-            r, g, b = colorsys.hsv_to_rgb(hue, 1, led_brightness)
+            r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
             pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
 
         # Update the offset for the rainbow animation
@@ -321,7 +319,7 @@ class Preset_Rainbombs:
 
         # Update and draw active bombs
         new_active_bombs = []
-        r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness * led_brightness)  # Scale bomb brightness
+        r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness )  # Scale bomb brightness
         for bomb_position, frame_count, direction in self.active_bombs:
             if frame_count < self.bomb_lifetime:
                 # Calculate the positions of the expanding pixels
