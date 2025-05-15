@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start neopx.service",
+            "type": "shell",
+            "command": "sudo systemctl start neopx.service",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Restart neopx.service",
+            "type": "shell",
+            "command": "sudo systemctl restart neopx.service",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Stop neopx.service",
+            "type": "shell",
+            "command": "sudo systemctl stop neopx.service",
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}
