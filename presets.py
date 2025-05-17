@@ -242,6 +242,8 @@ class Preset_Rainbombs(PresetBase):
         dispatch_map = {
             '/param1': 'bomb_brightness',
             '/param2': 'bg_led_brightness',
+            '/param3': 'bomb_size', 
+            '/param4': 'background_hue_speed',
         }
         super().__init__(
             parent_strip,
@@ -251,15 +253,17 @@ class Preset_Rainbombs(PresetBase):
         self.bomb_interval = 1  # Time between bombs
         self.bomb_speed = 0.25  # Speed of the expanding pixels
         self.bomb_lifetime = 5  # Number of frames for each bomb
-        self.bomb_size = 5  # Exact number of pixels in the bomb
+        self.bomb_size = 0.5  # Exact number of pixels in the bomb
+        self.bomb_size_scale = 5
         self.last_bomb_time = time.time()
 
         self.active_bombs = []  # List of active bombs [(position, frame_count, direction)]
         self.hue = 0  # Current hue for the bombs
         self.hue_speed = 0.0005  # Speed of hue shifting
         self.background_hue = 0.5  # Initial background hue
-        self.background_hue_speed = 0.02  # Speed of background hue shifting
-        self.bg_led_brightness = 0.025  # Brightness of the background LEDs
+        self.background_hue_speed = 0.1  # Speed of background hue shifting
+        self.background_hue_speed_scale = 0.05
+        self.bg_led_brightness = 0.5  # Brightness of the background LEDs
 
         self.letter_phase_delay = {letter: random.uniform(0.1, 1.0) for letter in letter_lookup_dict}  # Random phase delay for each letter
         self.letter_last_bomb_time = {letter: time.time() for letter in letter_lookup_dict}  # Track last bomb time for each letter
@@ -274,7 +278,7 @@ class Preset_Rainbombs(PresetBase):
         self.hue = (self.hue + self.hue_speed) % 1.0
 
         # Update the background hue
-        self.background_hue = (self.background_hue + self.background_hue_speed) % 1.0
+        self.background_hue = (self.background_hue + self.background_hue_speed*self.background_hue_speed_scale) % 1.0
 
         # Set the background hue
         bg_r, bg_g, bg_b = colorsys.hsv_to_rgb(self.background_hue, 1, self.bg_led_brightness)
@@ -290,13 +294,14 @@ class Preset_Rainbombs(PresetBase):
                 direction = random.choice([-1, 1])  # Random direction: -1 for left, 1 for right
                 self.active_bombs.append((bomb_position, 0, direction))  # Add new bomb with direction
 
+        bomb_size_scaled = int(self.bomb_size_scale * self.bomb_size)  # Convert to pixel count
         # Update and draw active bombs
         new_active_bombs = []
         r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness )  # Scale bomb brightness
         for bomb_position, frame_count, direction in self.active_bombs:
             if frame_count < self.bomb_lifetime:
                 # Calculate the positions of the expanding pixels
-                for offset in range(self.bomb_size):
+                for offset in range(bomb_size_scaled):
                     pixel_position = (bomb_position + direction * (offset + frame_count)) % num_pixels
                     pixels[pixel_position] = (int(r * 255), int(g * 255), int(b * 255))
 
