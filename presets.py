@@ -47,10 +47,9 @@ class PresetBase:
 class Preset_Monochrome(PresetBase):
     def __init__(self, parent_strip):
         dispatch_map = {
-            '/param1': 'hue_offset',
-            '/param2': 's',
-            '/param3': 'v',
-            '/param4': 'cycle_speed',
+            '/param1': 'bright_mult',
+            '/param2': 'hue_offset',
+            '/param3': 'cycle_speed',
         }
         super().__init__(
             parent_strip,
@@ -63,6 +62,7 @@ class Preset_Monochrome(PresetBase):
         self.hue_offset = 0
         self.cycle_speed = 0.01  # Speed of hue cycling
         self.time_updated = time.time()  # Track the last update time
+        self.bright_mult = 1.0  # Add bright_mult
 
     def set_pixels(self):
         # Update hue based on time and cycle speed
@@ -71,11 +71,13 @@ class Preset_Monochrome(PresetBase):
         self.time_updated = current_time
 
         r, g, b = colorsys.hsv_to_rgb(self.h + self.hue_offset, self.s, self.v)
-
+        r = int(r * 255 * self.bright_mult)
+        g = int(g * 255 * self.bright_mult)
+        b = int(b * 255 * self.bright_mult)
         pixels = self.parent_strip.pixels
         
         for i in range(len(pixels)):
-            pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
+            pixels[i] = (r, g, b)
 
         pixels.show()
 
@@ -83,16 +85,15 @@ class Preset_Rainbow(PresetBase):
     def __init__(self, parent_strip):
 
         dispatch_map = {
-            '/param1': 'wavelength',
-            '/param2': 'wave_speed',
-            '/param3': 'wait_time',
+            '/param1': 'bright_mult',
+            '/param2': 'wavelength',
+            '/param3': 'wave_speed',
+            '/param4': 'wait_time',
         }
         super().__init__(
             parent_strip,
             dispatch_map=dispatch_map
             )
-
-
 
         self.wavelength_max = self.parent_strip.pixels.n*5
         self.wavelength = 0.25  # Default wavelength in fraction of the strip length
@@ -105,6 +106,7 @@ class Preset_Rainbow(PresetBase):
 
         self.wave_speed_max = 50 # hue offset increment per frame
         self.wave_speed = 0.5  # Speed of the wave animation
+        self.bright_mult = 1.0  # Add bright_mult
 
     def set_pixels(self):
         pixels = self.parent_strip.pixels
@@ -119,8 +121,10 @@ class Preset_Rainbow(PresetBase):
             i_hue = pixel_map_arr.index(i)
             hue = ((i_hue + self.offset) % wavelength_scaled) / wavelength_scaled
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
-
-            pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
+            r = int(r * 255 * self.bright_mult)
+            g = int(g * 255 * self.bright_mult)
+            b = int(b * 255 * self.bright_mult)
+            pixels[i] = (r, g, b)
 
         pixels.show()
 
@@ -142,7 +146,8 @@ class Preset_Rainbow(PresetBase):
 class Preset_Letters(PresetBase):
     def __init__(self, parent_strip):
         dispatch_map = {
-            '/param1': 'hue_shift',
+            '/param1': 'bright_mult',
+            '/param2': 'hue_shift',
         }
         super().__init__(
             parent_strip,
@@ -151,6 +156,8 @@ class Preset_Letters(PresetBase):
 
         self.hue_shift = 0.5/14  # Default hue shift per letter
         self.hue_shift_max = 1.0
+
+        self.bright_mult = 1.0  # overall brightness
 
         self.idx_offset = 0  # Offset for animation
         self.time_updated = time.time()  # Track the last update time
@@ -171,8 +178,11 @@ class Preset_Letters(PresetBase):
             letter_idx = list(letter_lookup_dict.keys()).index(letter) + self.idx_offset
             hue = (letter_idx * self.hue_shift) % 1.0
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
+            r = int(r * 255 * self.bright_mult)
+            g = int(g * 255 * self.bright_mult)
+            b = int(b * 255 * self.bright_mult)
             for i in range(start, end):
-                pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
+                pixels[i] = (r, g, b)
 
         pixels.show()
 
@@ -180,8 +190,8 @@ class Preset_Letters(PresetBase):
 class Preset_RainbowRain(PresetBase):
     def __init__(self, parent_strip):
         dispatch_map = {
-            '/param1': 'dot_spacing',
-            '/param2': 'dot_speed',
+            '/param1': 'bright_mult',
+            '/param2': 'dot_spacing',
         }
         super().__init__(
             parent_strip,
@@ -200,11 +210,13 @@ class Preset_RainbowRain(PresetBase):
         self.wave_speed_max = 50 # hue offset increment per frame
         self.wave_speed = 0.5  # Speed of the wave animation
 
-        self.dot_spacing = 50  # Spacing between dots
+        self.dot_spacing = 0.5  # Spacing between dots
+        self.dot_spacing_max = 100  # Maximum spacing between dots
         self.dot_color = (0, 0, 0)  # Default color for the dots
         self.dot_speed = 0.05  # Speed of the dots
         self.dot_offset = 0  # Offset for the moving dots
         self.time_updated_dots = time.time()
+        self.bright_mult = 1.0  # Add bright_mult
 
     def set_pixels(self):
         pixels = self.parent_strip.pixels
@@ -217,7 +229,10 @@ class Preset_RainbowRain(PresetBase):
             i_hue = pixel_map_arr.index(i)
             hue = ((i_hue + self.offset) % self.wavelength) / self.wavelength
             r, g, b = colorsys.hsv_to_rgb(hue, 1, 1)
-            pixels[i] = (int(r * 255), int(g * 255), int(b * 255))
+            r = int(r * 255 * self.bright_mult)
+            g = int(g * 255 * self.bright_mult)
+            b = int(b * 255 * self.bright_mult)
+            pixels[i] = (r, g, b)
 
         # Update the offset for the rainbow animation
         current_time = time.time()
@@ -225,12 +240,13 @@ class Preset_RainbowRain(PresetBase):
             self.time_updated = current_time
             self.offset += 1
 
+        dot_spacing_scaled = int((self.dot_spacing_max * self.dot_spacing) + 2)  # Convert to pixel count
         # Add moving dots in the opposite direction
         if current_time - self.time_updated_dots > self.dot_speed:
             self.time_updated_dots = current_time
-            self.dot_offset = (self.dot_offset - 1) % self.dot_spacing
+            self.dot_offset = (self.dot_offset - 1) % dot_spacing_scaled
 
-        for i in range(0, num_pixels, self.dot_spacing):
+        for i in range(0, num_pixels, dot_spacing_scaled):
             dot_position = (i + self.dot_offset) % num_pixels
             pixels[dot_position] = self.dot_color
 
@@ -240,8 +256,8 @@ class Preset_RainbowRain(PresetBase):
 class Preset_Rainbombs(PresetBase):
     def __init__(self, parent_strip):
         dispatch_map = {
-            '/param1': 'bomb_brightness',
-            '/param2': 'bg_led_brightness',
+            '/param1': 'bright_mult',
+            '/param2': 'bomb_brightness',
             '/param3': 'bomb_size', 
             '/param4': 'background_hue_speed',
         }
@@ -269,6 +285,7 @@ class Preset_Rainbombs(PresetBase):
         self.letter_last_bomb_time = {letter: time.time() for letter in letter_lookup_dict}  # Track last bomb time for each letter
 
         self.bomb_brightness = 1.0  # Default bomb brightness (scaled to led_brightness)
+        self.bright_mult = 1.0  # Add bright_mult
 
     def set_pixels(self):
         pixels = self.parent_strip.pixels
@@ -282,8 +299,11 @@ class Preset_Rainbombs(PresetBase):
 
         # Set the background hue
         bg_r, bg_g, bg_b = colorsys.hsv_to_rgb(self.background_hue, 1, self.bg_led_brightness)
+        bg_r = int(bg_r * 255 * self.bright_mult)
+        bg_g = int(bg_g * 255 * self.bright_mult)
+        bg_b = int(bg_b * 255 * self.bright_mult)
         for i in range(num_pixels):
-            pixels[i] = (int(bg_r * 255), int(bg_g * 255), int(bg_b * 255))
+            pixels[i] = (bg_r, bg_g, bg_b)
 
         # Check if it's time to spawn a new bomb for each letter
         current_time = time.time()
@@ -297,13 +317,16 @@ class Preset_Rainbombs(PresetBase):
         bomb_size_scaled = int(self.bomb_size_scale * self.bomb_size)  # Convert to pixel count
         # Update and draw active bombs
         new_active_bombs = []
-        r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness )  # Scale bomb brightness
+        r, g, b = colorsys.hsv_to_rgb(self.hue, 1, self.bomb_brightness)
+        r = int(r * 255 * self.bright_mult)
+        g = int(g * 255 * self.bright_mult)
+        b = int(b * 255 * self.bright_mult)
         for bomb_position, frame_count, direction in self.active_bombs:
             if frame_count < self.bomb_lifetime:
                 # Calculate the positions of the expanding pixels
                 for offset in range(bomb_size_scaled):
                     pixel_position = (bomb_position + direction * (offset + frame_count)) % num_pixels
-                    pixels[pixel_position] = (int(r * 255), int(g * 255), int(b * 255))
+                    pixels[pixel_position] = (r, g, b)
 
                 # Increment the frame count and keep the bomb active
                 new_active_bombs.append((bomb_position, frame_count + 1, direction))
