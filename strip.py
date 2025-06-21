@@ -13,6 +13,7 @@ preset_lookup = {
 'letters': Preset_Letters,
 'rainbow_rain': Preset_RainbowRain,
 'rainbombs': Preset_Rainbombs,
+'letter_pixels': Preset_LetterPixels,
 } 
 
 default_preset_fp = 'default_preset.txt'

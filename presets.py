@@ -1,6 +1,8 @@
 import time
 import colorsys
 import random
+import csv
+import os
 
 # Utility function for HSV to RGB conversion with brightness scaling
 def hsv_to_rgb_scaled(h, s, v, bright_mult):
@@ -308,6 +310,42 @@ class Preset_Rainbombs(PresetBase):
         self.active_bombs = new_active_bombs
 
         # Write the updated pixel data
+        pixels.show()
+
+class Preset_LetterPixels(PresetBase):
+    def __init__(self, parent_strip, csv_path='letter_pixels.csv'):
+        dispatch_map = {}
+        super().__init__(parent_strip, dispatch_map=dispatch_map)
+        self.csv_path = csv_path
+        self.pixel_map = self.load_pixel_map()
+
+    def load_pixel_map(self):
+        pixel_map = {}
+        if not os.path.exists(self.csv_path):
+            return pixel_map
+        with open(self.csv_path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                letter = row['letter']
+                pixel = int(row['pixel'])
+                r = int(row['r'])
+                g = int(row['g'])
+                b = int(row['b'])
+                if letter not in pixel_map:
+                    pixel_map[letter] = {}
+                pixel_map[letter][pixel] = (r, g, b)
+        return pixel_map
+
+    def set_pixels(self):
+        pixels = self.parent_strip.pixels
+        for letter, pixel_dict in self.pixel_map.items():
+            if letter not in letter_lookup_dict:
+                continue
+            start, end = letter_lookup_dict[letter]
+            for rel_pixel, (r, g, b) in pixel_dict.items():
+                abs_pixel = start + rel_pixel
+                if abs_pixel < end:
+                    pixels[abs_pixel] = (r, g, b)
         pixels.show()
 
 
