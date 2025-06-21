@@ -3,6 +3,8 @@ import colorsys
 import random
 import csv
 import os
+import math
+import numpy as np
 
 # Utility function for HSV to RGB conversion with brightness scaling
 def hsv_to_rgb_scaled(h, s, v, bright_mult):
@@ -312,12 +314,24 @@ class Preset_Rainbombs(PresetBase):
         # Write the updated pixel data
         pixels.show()
 
+
 class Preset_LetterPixels(PresetBase):
     def __init__(self, parent_strip, csv_path='letter_pixels.csv'):
-        dispatch_map = {}
+        dispatch_map = {
+            '/param1': 'noise',
+        }
         super().__init__(parent_strip, dispatch_map=dispatch_map)
         self.csv_path = csv_path
         self.pixel_map = self.load_pixel_map()
+        self.noise = 1
+        self.time_updated = time.time()
+
+        # make a lookup array of noise values for each relative pixel
+        self.noise_map = {}
+        for i in range(0, 1000):
+            # Use a sine wave to generate noise values
+            noise_value = math.sin(i * 0.1) * self.noise
+            self.noise_map[i] = noise_value
 
     def load_pixel_map(self):
         pixel_map = {}
@@ -337,7 +351,9 @@ class Preset_LetterPixels(PresetBase):
         return pixel_map
 
     def set_pixels(self):
+        import colorsys
         pixels = self.parent_strip.pixels
+        t = time.time()
         for letter, pixel_dict in self.pixel_map.items():
             if letter not in letter_lookup_dict:
                 continue
@@ -345,7 +361,14 @@ class Preset_LetterPixels(PresetBase):
             for rel_pixel, (r, g, b) in pixel_dict.items():
                 abs_pixel = start + rel_pixel
                 if abs_pixel < end:
-                    pixels[abs_pixel] = (r, g, b)
+                    # Add time-based brightness (value) noise instead of hue
+                    base_h, base_s, base_v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
+                    # Oscillate brightness with a sine wave based on time and pixel
+                    # Use abs_pixel in the sine to ensure unique noise per pixel
+                    noise = math.sin(t + abs_pixel*self.noise_map[abs_pixel]) * self.noise
+                    new_v = min(1.0, max(0.0, base_v + noise))
+                    nr, ng, nb = colorsys.hsv_to_rgb(base_h, base_s, new_v)
+                    pixels[abs_pixel] = (int(nr*255), int(ng*255), int(nb*255))
         pixels.show()
 
 
